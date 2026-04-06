@@ -44,7 +44,7 @@ class ConversationManager:
         """延迟初始化 Anthropic 客户端"""
         if self.client is None:
             api_key = self.api_key or os.getenv("ANTHROPIC_API_KEY")
-            base_url = self.base_url or os.getenv("ANTHROPIC_BASE_URL")
+            base_url = self.base_url or os.getenv("ANTHROPIC_BASE_URL") or "https://api.anthropic.com"
             if not api_key:
                 raise ValueError("请设置 ANTHROPIC_API_KEY 环境变量")
             # 使用 httpx 直接调用 API，支持 x-api-key 认证（适配 z.ai）
