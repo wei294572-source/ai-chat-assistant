@@ -29,9 +29,21 @@ class ConversationManager:
 
 请用中文回复，保持专业且亲切的语气。"""
 
-        self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        # 延迟初始化客户端，避免启动时因缺少环境变量而失败
+        self.client = None
         self.model = os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022")
         self.conversation_history = []
+
+        # 获取 API Key
+        self.api_key = os.getenv("ANTHROPIC_API_KEY")
+
+    def _init_client(self) -> None:
+        """延迟初始化 Anthropic 客户端"""
+        if self.client is None:
+            api_key = self.api_key or os.getenv("ANTHROPIC_API_KEY")
+            if not api_key:
+                raise ValueError("请设置 ANTHROPIC_API_KEY 环境变量")
+            self.client = anthropic.Anthropic(api_key=api_key)
 
     def add_user_message(self, message: str) -> None:
         """添加用户消息到对话历史"""
@@ -55,6 +67,9 @@ class ConversationManager:
             AI的回复内容
         """
         try:
+            # 延迟初始化客户端
+            self._init_client()
+
             response = self.client.messages.create(
                 model=self.model,
                 max_tokens=2048,
