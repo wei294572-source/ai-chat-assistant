@@ -34,16 +34,22 @@ class ConversationManager:
         self.model = os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022")
         self.conversation_history = []
 
-        # 获取 API Key
+        # 获取 API Key 和 Base URL（支持第三方代理）
         self.api_key = os.getenv("ANTHROPIC_API_KEY")
+        self.base_url = os.getenv("ANTHROPIC_BASE_URL")
 
     def _init_client(self) -> None:
         """延迟初始化 Anthropic 客户端"""
         if self.client is None:
             api_key = self.api_key or os.getenv("ANTHROPIC_API_KEY")
+            base_url = self.base_url or os.getenv("ANTHROPIC_BASE_URL")
             if not api_key:
                 raise ValueError("请设置 ANTHROPIC_API_KEY 环境变量")
-            self.client = anthropic.Anthropic(api_key=api_key)
+            # 支持第三方代理（自定义 base_url）
+            if base_url:
+                self.client = anthropic.Anthropic(api_key=api_key, base_url=base_url)
+            else:
+                self.client = anthropic.Anthropic(api_key=api_key)
 
     def add_user_message(self, message: str) -> None:
         """添加用户消息到对话历史"""
