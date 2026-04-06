@@ -79,10 +79,14 @@ class ConversationManager:
             # Groq API 使用 /chat/completions 端点
             payload = {
                 "model": self.model,
-                "messages": [{"role": "system", "content": self.system_prompt}] + self.conversation_history,
+                "messages": self.conversation_history,
                 "max_tokens": 2048,
                 "temperature": 0.7
             }
+
+            # 如果有 system prompt，添加到 messages 开头
+            if self.system_prompt:
+                payload["messages"] = [{"role": "system", "content": self.system_prompt}] + self.conversation_history
 
             response = self._http_client.post("/chat/completions", json=payload)
             response.raise_for_status()
