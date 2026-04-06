@@ -22,10 +22,10 @@ def main():
     """主应用函数"""
 
     # 检查API Key
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        st.error("⚠️ 请设置 ANTHROPIC_API_KEY 环境变量")
-        st.info("请在项目目录下创建 .env 文件，并添加你的API Key")
-        st.code("ANTHROPIC_API_KEY=your_api_key_here")
+    if not os.getenv("GROQ_API_KEY"):
+        st.error("⚠️ 请设置 GROQ_API_KEY 环境变量")
+        st.info("请在项目目录下创建 .env 文件，或去 https://console.groq.com/ 获取 API Key")
+        st.code("GROQ_API_KEY=your_api_key_here")
         return
 
     # 初始化session state
