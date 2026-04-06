@@ -1,11 +1,13 @@
 """
 AI对话核心模块
 支持多轮对话记忆和上下文管理
+支持第三方代理服务
 """
 
 import anthropic
 from typing import List, Dict
 import os
+import httpx
 
 
 class ConversationManager:
@@ -45,11 +47,12 @@ class ConversationManager:
             base_url = self.base_url or os.getenv("ANTHROPIC_BASE_URL")
             if not api_key:
                 raise ValueError("请设置 ANTHROPIC_API_KEY 环境变量")
-            # 支持第三方代理（自定义 base_url）
-            if base_url:
-                self.client = anthropic.Anthropic(api_key=api_key, base_url=base_url)
-            else:
-                self.client = anthropic.Anthropic(api_key=api_key)
+            # 使用 httpx 直接调用 API，支持 x-api-key 认证（适配 z.ai）
+            self._http_client = httpx.Client(
+                base_url=base_url,
+                headers={"x-api-key": api_key, "Content-Type": "application/json"},
+                timeout=60.0
+            )
 
     def add_user_message(self, message: str) -> None:
         """添加用户消息到对话历史"""
@@ -76,14 +79,20 @@ class ConversationManager:
             # 延迟初始化客户端
             self._init_client()
 
-            response = self.client.messages.create(
-                model=self.model,
-                max_tokens=2048,
-                system=self.system_prompt,
-                messages=self.conversation_history
-            )
+            # 构建请求
+            payload = {
+                "model": self.model,
+                "max_tokens": 2048,
+                "system": self.system_prompt,
+                "messages": self.conversation_history
+            }
 
-            assistant_message = response.content[0].text
+            # 使用 httpx 调用 API
+            response = self._http_client.post("/messages", json=payload)
+            response.raise_for_status()
+
+            result = response.json()
+            assistant_message = result["content"][0]["text"]
             self.add_assistant_message(assistant_message)
 
             return assistant_message
